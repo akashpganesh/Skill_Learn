@@ -21,7 +21,8 @@ var userSchema=mongoose.Schema({
         required:true
     },
     image:{
-        type:String
+        type:String,
+        default:""
     },
     user_status:{
         type:Number,
@@ -30,7 +31,10 @@ var userSchema=mongoose.Schema({
     user_type:{
         type:String,
         required:true
-        }
+        },
+    date:{
+        type:Date,
+    }
 })
 
 module.exports=mongoose.model("User",userSchema)

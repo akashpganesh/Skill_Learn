@@ -11,6 +11,10 @@ var bookingSchema=mongoose.Schema({
     },
     booking_date:{
         type: Date,
+    },
+    booking_status:{
+        type: String,
+        default: "Pending"
     }
 })
 

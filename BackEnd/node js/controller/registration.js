@@ -1,6 +1,7 @@
 var User = require('../model/registration')
 var Tutor = require('../model/tutor')
 var Admin = require('../model/admin')
+var Student = require('../model/student')
 
 var jwt = require("jsonwebtoken")
 const expressJwt = require('express-jwt')
@@ -23,7 +24,7 @@ exports.addUser = (req, res) => {
                 return res.status(400).json({ 'msg': err })
             }
             if(req.body.user_type == "Tutor"){
-                req.body.id = ObjectId(user._id)
+                req.body.id = new ObjectId(user._id)
                 let newTutor = Tutor(req.body)
                 newTutor.save((err,tutor) => {
                     if (err) {
@@ -32,7 +33,7 @@ exports.addUser = (req, res) => {
                 })
             }
             if(req.body.user_type == "Admin"){
-                req.body.id = ObjectId(user._id)
+                req.body.id = new ObjectId(user._id)
                 let newAdmin = Admin(req.body)
                 newAdmin.save((err,admin) => {
                     if (err) {
@@ -40,10 +41,10 @@ exports.addUser = (req, res) => {
                     }
                 })
             }
-            if(req.body.user_type == "User"){
-                req.body.id = ObjectId(user._id)
-                let newUserup = Userup(req.body)
-                newUserup.save((err,userup) => {
+            if(req.body.user_type == "Student"){
+                req.body.id = new ObjectId(user._id)
+                let newStudent = Student(req.body)
+                newStudent.save((err,userup) => {
                     if (err) {
                         return res.status(400).json({ 'msg': "Error occured" })
                     }
@@ -136,11 +137,11 @@ exports.acceptUser = (req, res) => {
         }
         if (user) {
             User.updateOne( 
-                { _id: ObjectId(user._id) }, 
+                { _id: new ObjectId(user._id) }, 
                 {
-                  $set: 
+                  $set:
                     {
-                        user_status:req.body.user_status,
+                       user_status:req.body.user_status,
                     }
                 },(err,u)=>{
                     if(err){
@@ -156,6 +157,26 @@ exports.acceptUser = (req, res) => {
 };
 
 
+exports.userReport=(req,res)=>{
+    const startDate = new Date(req.body.startDate);
+    const endDate = new Date(req.body.endDate);
+    console.log(req.body)
+    User.find({user_type:req.body.user_type,date: {
+        $gte: startDate,
+        $lte: endDate,
+      },},(err,user)=>{
+        if(err){
+            return res.status(404).json({error:"Error"})
+        }
+        else if(user){
+
+            return res.status(201).json(user)
+        }
+        else{
+            return res.status(404).json({error:t})
+        }
+    })
+}
 
 
 

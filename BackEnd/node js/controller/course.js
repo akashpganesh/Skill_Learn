@@ -186,6 +186,14 @@ exports.selectCourse=(req,res)=>{
             }
           },
           {
+            $lookup: {
+              from: 'users',
+              localField: 'tutor_id',
+              foreignField: '_id',
+              as: 'tutor'
+            }
+          },
+          {
             $match: {
                  "_id":new ObjectId(id)
              }
@@ -204,19 +212,40 @@ exports.selectCourse=(req,res)=>{
 
 exports.searchCourse=(req,res)=>{
     console.log(req.body)
-    Course.find({},(err,course)=>{
-        if(err){
-            return res.status(404).json({error:"Error"})
-        }
-        else if(course){
+    Course.aggregate([
+         {
+            $lookup: {
+              from: "topics",
+              localField: "topic_id",
+               foreignField: "_id",
+               as: "topics"
+            },
+        },
+        {
+            $lookup: {
+             from: "coursetypes",
+              localField: "topics.type_id",
+               foreignField: "_id",
+               as: "type"
+            },
+        },
+        {
+            $match: {
+                 "course_status":req.body.course_status
+             }
 
-            return res.status(201).json(course)
         }
-        else{
-            return res.status(404).json({err})
+    ]).exec(
+        function(err,data){
+            if(err){
+                return res.status(401).json(err);}
+            if(data){
+                return res.status(201).json(data);
+            }
         }
-    })
+    )
 }
+
 
 exports.bookingCourse=(req,res)=>{
     console.log(req.body)
@@ -297,7 +326,7 @@ exports.getCourse=(req,res)=>{
 
 exports.addPayment=(req,res)=>{
     console.log(req.body)
-    Payment.findOne({booking_id:ObjectId(req.body.booking_id)},(err,payment)=>{
+    Payment.findOne({booking_id:req.body.booking_id},(err,payment)=>{
         if(err){
             return res.status(404).json({error:"Error"})
         }
@@ -386,7 +415,8 @@ exports.Search=(req,res)=>{
         },
         {
             $match: {
-                 "topic_id":new ObjectId(topicid)
+                 "topic_id":new ObjectId(topicid),
+                 "course_status":req.body.course_status
              }
 
         }
@@ -421,6 +451,219 @@ exports.CourseList=(req,res)=>{
                as: "type"
             },
         }
+    ]).exec(
+        function(err,data){
+            if(err){
+                return res.status(401).json(err);}
+            if(data){
+                return res.status(201).json(data);
+            }
+        }
+    )
+}
+
+exports.acceptCourse = (req, res) => {
+    console.log(req.body)
+    Course.findOne({ _id: req.body._id }, (err, course) => {
+        if (err) {
+            // console.log("err")
+            return res.status(400).json({ 'msg': err });
+        }
+        if (course) {
+            Course.updateOne( 
+                { _id: new ObjectId(course._id)},
+                {
+                  $set:
+                    {
+                       course_status:req.body.course_status,
+                    }
+                },(err,u)=>{
+                    if(err){
+                        return res.status(400).json({ 'msg': "Error occured"});
+                    }
+                    if(u){
+                        return res.status(201).json({ 'msg': "Status Updated"});
+                    }
+                } 
+            )
+        }
+    });
+};
+
+
+exports.BookingReport=(req,res)=>{
+    const startDate = new Date(req.body.startDate);
+    const endDate = new Date(req.body.endDate);
+    console.log(req.body)
+    Booking.aggregate([
+         {
+            $lookup: {
+              from: "courses",
+              localField: "course_id",
+               foreignField: "_id",
+               as: "course"
+            },
+        },
+        {
+            $lookup: {
+             from: "users",
+              localField: "user_id",
+               foreignField: "_id",
+               as: "user"
+            },
+        },
+        {
+            $lookup: {
+             from: "users",
+              localField: "course.tutor_id",
+               foreignField: "_id",
+               as: "tutor"
+            },
+        },
+        {
+            $match: {
+              booking_date: {
+                $gte: startDate,
+                $lte: endDate,
+              },
+            },
+          }
+    ]).exec(
+        function(err,data){
+            if(err){
+                return res.status(401).json(err);}
+            if(data){
+                return res.status(201).json(data);
+            }
+        }
+    )
+}
+
+exports.paymentStatus = (req, res) => {
+    console.log(req.body)
+    Booking.findOne({ _id: req.body._id }, (err, booking) => {
+        if (err) {
+            // console.log("err")
+            return res.status(400).json({ 'msg': err });
+        }
+        if (booking) {
+            Booking.updateOne( 
+                { _id: new ObjectId(booking._id)},
+                {
+                  $set:
+                    {
+                       booking_status:req.body.booking_status,
+                    }
+                },(err,u)=>{
+                    if(err){
+                        return res.status(400).json({ 'msg': "Error occured"});
+                    }
+                    if(u){
+                        return res.status(201).json({ 'msg': "Status Updated"});
+                    }
+                } 
+            )
+        }
+    });
+};
+
+
+exports.dispTopic2=(req,res)=>{
+    console.log(req.body)
+    Topic.aggregate([
+         {
+            $lookup: {
+              from: "coursetypes",
+              localField: "type_id",
+               foreignField: "_id",
+               as: "type"
+            },
+        },
+    ]).exec(
+        function(err,data){
+            if(err){
+                return res.status(401).json(err);}
+            if(data){
+                return res.status(201).json(data);
+            }
+        }
+    )
+}
+
+
+exports.deleteType=(req,res)=>{
+    console.log(req.body)
+    Coursetype.deleteOne({_id:req.body._id}, (err, coursetype)=>{
+        if(err){
+            return res.status(404).json({error:"error"})
+        }
+        else if(coursetype){
+            return res.status(201).json(coursetype)
+        }
+        else{
+            return res.status(404).json({error:t})
+        }
+    })
+}
+
+exports.deleteTopic=(req,res)=>{
+    console.log(req.body)
+    Topic.deleteOne({_id:req.body._id}, (err, topic)=>{
+        if(err){
+            return res.status(404).json({error:"error"})
+        }
+        else if(topic){
+            return res.status(201).json(topic)
+        }
+        else{
+            return res.status(404).json({error:t})
+        }
+    })
+}
+
+exports.deleteTopic2=(req,res)=>{
+    console.log(req.body)
+    Topic.deleteMany({type_id:req.body.type_id}, (err, topic)=>{
+        if(err){
+            return res.status(404).json({error:"error"})
+        }
+        else if(topic){
+            return res.status(201).json(topic)
+        }
+        else{
+            return res.status(404).json({error:t})
+        }
+    })
+}
+
+
+exports.BookingReport2=(req,res)=>{
+    console.log(req.body)
+    Booking.aggregate([
+         {
+            $lookup: {
+              from: "courses",
+              localField: "course_id",
+               foreignField: "_id",
+               as: "course"
+            },
+        },
+        {
+            $lookup: {
+             from: "users",
+              localField: "user_id",
+               foreignField: "_id",
+               as: "user"
+            },
+        },
+        {
+            $lookup: {
+             from: "users",
+              localField: "course.tutor_id",
+               foreignField: "_id",
+               as: "tutor"
+            },
+        },
     ]).exec(
         function(err,data){
             if(err){

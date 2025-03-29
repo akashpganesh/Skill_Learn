@@ -1,20 +1,18 @@
-var Tutor = require('../model/tutor');
+var Student = require('../model/student');
 const {ObjectId}=require('mongodb');
-exports.addTutor = (req, res) => {
+exports.addStudent = (req, res) => {
     console.log(req.body)
-
-    Tutor.findOne({ id: req.body.id }, (err, tutor) => {
+    Student.findOne({ id: req.body.id }, (err, student) => {
         if (err) {
             // console.log("err")
             return res.status(400).json({ 'msg': err });
         }
-        if (tutor) {
-            Tutor.updateOne( 
-                { _id: new ObjectId(tutor._id) }, 
+        if (student) {
+            Student.updateOne( 
+                { _id: new ObjectId(student._id) }, 
                 {
                   $set: 
                     {
-                        qualification:req.body.qualification,
                         age:req.body.age
                     }
                 },(err,u)=>{
@@ -30,43 +28,14 @@ exports.addTutor = (req, res) => {
     });
 };
 
-exports.addProof = (req, res) => {
+exports.deleteStudent=(req,res)=>{
     console.log(req.body)
-
-    Tutor.findOne({ id: req.body.id }, (err, tutor) => {
-        if (err) {
-            // console.log("err")
-            return res.status(400).json({ 'msg': err });
-        }
-        if (tutor) {
-            Tutor.updateOne( 
-                { _id: new ObjectId(tutor._id) }, 
-                {
-                  $set: 
-                    {
-                        proof:req.body.proof
-                    }
-                },(err,u)=>{
-                    if(err){
-                        return res.status(400).json({ 'msg': "Error occured"});
-                    }
-                    if(u){
-                        return res.status(201).json({ 'msg': "Profile Updated"});
-                    }
-                } 
-            )
-        }
-    });
-};
-
-exports.deleteTutor=(req,res)=>{
-    console.log(req.body)
-    Tutor.deleteOne({id:req.body.id}, (err, tutor)=>{
+    Student.deleteOne({id:req.body.id}, (err, student)=>{
         if(err){
             return res.status(404).json({error:"error"})
         }
-        else if(tutor){
-            return res.status(201).json(tutor)
+        else if(student){
+            return res.status(201).json(student)
         }
         else{
             return res.status(404).json({error:t})
@@ -74,10 +43,10 @@ exports.deleteTutor=(req,res)=>{
     })
 }
 
-exports.dispTutor=(req,res)=>{
+exports.dispStudent=(req,res)=>{
     console.log(req.body)
     var id=req.body.id
-    Tutor.aggregate([
+    Student.aggregate([
          {
             $lookup: {
               from: "users",
@@ -90,6 +59,7 @@ exports.dispTutor=(req,res)=>{
             $match: {
                  "id":new ObjectId(id)
              }
+
         }
     ]).exec(
         function(err,data){

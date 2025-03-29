@@ -6,11 +6,15 @@ var tutorSchema=mongoose.Schema({
     },
     qualification:{
         type: String,
-        minlength: 3,
-        maxlength: 50,
+        default:""
+    },
+    proof:{
+        type:String,
+        default:""
     },
     age:{
         type: Number,
+        default:""
     }
 })
 

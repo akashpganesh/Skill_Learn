@@ -24,7 +24,11 @@ var courseSchema=mongoose.Schema({
     },
     course_image:{
         type:String
-    }
+    },
+    course_status:{
+        type:Number,
+        default:0
+    },
 })
 
 module.exports=mongoose.model("Course",courseSchema)
